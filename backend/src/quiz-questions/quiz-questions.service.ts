@@ -56,6 +56,7 @@ export class QuizQuestionsService {
           question: dto.question,
           type: dto.type,
           answer: dto.answer,
+          answerOptions: dto.answerOptions,
           quiz: { connect: { id: dto.quizId } },
         },
       });

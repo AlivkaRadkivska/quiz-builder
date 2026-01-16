@@ -21,12 +21,13 @@ enum QuestionType {
 }
 
 model QuizQuestion {
-  id       Int          @id @default(autoincrement())
-  question String
-  type     QuestionType
-  answer   String
-  quizId   Int
-  quiz     Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  id            Int          @id @default(autoincrement())
+  question      String
+  type          QuestionType
+  answer        String[]
+  answerOptions String[]
+  quizId        Int
+  quiz          Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
 model Quiz {

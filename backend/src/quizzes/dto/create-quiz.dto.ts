@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 class CreateQuizQuestionWithQuizDto {
   @IsString()
@@ -8,8 +8,14 @@ class CreateQuizQuestionWithQuizDto {
   @IsString()
   type: 'Boolean' | 'Input' | 'Checkbox';
 
-  @IsString()
-  answer: string;
+  @IsArray()
+  @IsString({ each: true })
+  answer: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  answerOptions?: string[];
 }
 
 export class CreateQuizDto {

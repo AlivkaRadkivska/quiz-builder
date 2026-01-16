@@ -66,6 +66,7 @@ export class QuizzesService {
                   question: q.question,
                   type: q.type,
                   answer: q.answer,
+                  answerOptions: q.answerOptions,
                 })),
               }
             : undefined,

@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateQuizQuestionDto {
   @IsNumber()
@@ -10,6 +10,12 @@ export class CreateQuizQuestionDto {
   @IsString()
   type: 'Boolean' | 'Input' | 'Checkbox';
 
-  @IsString()
-  answer: string;
+  @IsArray()
+  @IsString({ each: true })
+  answer: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  answerOptions?: string[];
 }

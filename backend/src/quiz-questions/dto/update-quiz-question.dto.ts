@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
 
 export class UpdateQuizQuestionDto {
   @IsOptional()
@@ -9,5 +9,12 @@ export class UpdateQuizQuestionDto {
   type?: 'Boolean' | 'Input' | 'Checkbox';
 
   @IsOptional()
-  answer?: string;
+  @IsArray()
+  @IsString({ each: true })
+  answer?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  answerOptions?: string[];
 }
