@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "components/layout/quiz-loader.tsx"  ],
   "exclude": ["node_modules"]
 }

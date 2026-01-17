@@ -67,8 +67,8 @@ export function QuizQuestionCard({
     setValue(`questions.${index}.answerOptions`, []);
 
     switch (type) {
-      case 'Boolean':
       case 'Checkbox':
+      case 'Boolean':
         setValue(`questions.${index}.answer`, []);
         break;
       case 'Input':
@@ -94,6 +94,8 @@ export function QuizQuestionCard({
       setValue(`questions.${index}.answer`, filteredAnswers ?? []);
     }
   };
+
+  console.log('errors', questionErrors);
 
   return (
     <div className="border p-6 rounded space-y-4 relative">
@@ -155,8 +157,8 @@ export function QuizQuestionCard({
                     <input
                       type="radio"
                       value={value}
-                      checked={field.value?.[0] === value}
-                      onChange={() => field.onChange([value])}
+                      checked={field.value === value}
+                      onChange={() => field.onChange(value)}
                     />
                     {value}
                   </label>
@@ -192,6 +194,12 @@ export function QuizQuestionCard({
       {type === 'Checkbox' && (
         <div className="space-y-3">
           <Label>Answer options</Label>
+
+          {questionErrors?.answer?.message && (
+            <div className="text-sm text-destructive space-y-0">
+              {questionErrors.answer.message}
+            </div>
+          )}
 
           {optionFields.map((option, optIndex) => {
             const optionValue = watchedOptions?.[optIndex]?.value;

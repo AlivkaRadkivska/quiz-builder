@@ -4,11 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { QuizForm, QuizSchema } from '@/lib/zod-schemas';
+import { createQuiz } from '@/server/quizzes-service';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/dist/client/link';
 import { useFieldArray, useForm } from 'react-hook-form';
+import { DefaultLoader } from '../layout/default-loader';
 import { QuizQuestionCard } from './quiz-question-card';
 
 export function CreateQuizForm() {
+  const queryClient = useQueryClient();
   const { control, register, handleSubmit, formState, setValue } =
     useForm<QuizForm>({
       resolver: zodResolver(QuizSchema),
@@ -27,10 +32,39 @@ export function CreateQuizForm() {
     name: 'questions',
   });
 
+  const {
+    mutate: createNewQuiz,
+    isPending,
+    isSuccess,
+  } = useMutation({
+    mutationFn: createQuiz,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+    },
+  });
+
   const onSubmit = (data: QuizForm) => {
-    console.log('Submitting quiz:', data);
-    // POST /quizzes here
+    createNewQuiz(data);
   };
+
+  if (isSuccess) {
+    return (
+      <div className="max-w-3xl mx-auto p-4 space-y-8 flex flex-col items-center py-8">
+        <h2>Quiz created successfully!</h2>
+
+        <div className="flex w-full justify-center items-center gap-2">
+          <Link href="/quizzes">
+            <Button variant="outline">Go to Quizzes</Button>
+          </Link>
+          <Link href="/create">
+            <Button variant="secondary">Create one more Quiz</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isPending) return <DefaultLoader />;
 
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-4">
