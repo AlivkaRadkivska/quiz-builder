@@ -9,76 +9,64 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { QuizForm, QuizQuestionForm } from '@/lib/zod-schemas';
+import { QuestionSchema, QuizQuestionForm } from '@/lib/zod-schemas';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
-import {
-  Control,
-  Controller,
-  FieldErrorsImpl,
-  UseFieldArrayRemove,
-  UseFormRegister,
-  UseFormSetValue,
-  useFieldArray,
-  useWatch,
-} from 'react-hook-form';
+import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 
-interface QuizQuestionCardProps {
-  questionErrors?: FieldErrorsImpl<QuizQuestionForm>;
-  register: UseFormRegister<QuizForm>;
-  control: Control<QuizForm>;
-  remove: UseFieldArrayRemove;
-  index: number;
-  setValue: UseFormSetValue<QuizForm>;
+interface SingleQuestionFormProps {
+  onSubmit: (question: QuizQuestionForm) => void;
 }
 
-export function QuizQuestionCard({
-  questionErrors,
-  index,
-  register,
-  control,
-  remove,
-  setValue,
-}: QuizQuestionCardProps) {
-  const type = useWatch<QuizForm, `questions.${number}.type`>({
+export function SingleQuestionForm({ onSubmit }: SingleQuestionFormProps) {
+  const {
     control,
-    name: `questions.${index}.type`,
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors, isValid },
+  } = useForm<QuizQuestionForm>({
+    resolver: zodResolver(QuestionSchema),
+    mode: 'all',
+    reValidateMode: 'onChange',
+    defaultValues: {
+      question: '',
+      type: 'Boolean',
+      answer: [],
+      answerOptions: [],
+    },
   });
+
+  const type = useWatch({ control, name: 'type' });
 
   const watchedOptions = useWatch({
     control,
-    name: `questions.${index}.answerOptions`,
+    name: `answerOptions`,
   });
 
   const watchedAnswer = useWatch({
     control,
-    name: `questions.${index}.answer`,
+    name: `answer`,
   });
 
   const {
     fields: optionFields,
     append: appendOption,
     remove: removeOption,
-  } = useFieldArray<QuizForm, `questions.${number}.answerOptions`>({
+  } = useFieldArray({
     control,
-    name: `questions.${index}.answerOptions`,
+    name: 'answerOptions',
   });
 
   useEffect(() => {
-    setValue(`questions.${index}.answerOptions`, []);
+    setValue('answer', []);
+    setValue('answerOptions', []);
 
-    switch (type) {
-      case 'Checkbox':
-      case 'Boolean':
-        setValue(`questions.${index}.answer`, []);
-        break;
-      case 'Input':
-        setValue(`questions.${index}.answer.0`, '');
-        break;
-      default:
-        break;
+    if (type === 'Input') {
+      setValue('answer.0', '');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type]);
+  }, [type, setValue]);
 
   const handleRemoveOption = (optIndex: number) => {
     const optionValue = watchedOptions?.[optIndex]?.value;
@@ -91,35 +79,28 @@ export function QuizQuestionCard({
         (ans) => ans !== optionValue,
       );
 
-      setValue(`questions.${index}.answer`, filteredAnswers ?? []);
+      setValue('answer', filteredAnswers ?? []);
     }
   };
 
-  console.log('errors', questionErrors);
+  const onSubmitHandler = (data: QuizQuestionForm) => {
+    onSubmit(data);
+    reset();
+  };
 
   return (
-    <div className="border p-6 rounded space-y-4 relative">
-      <Button
-        type="button"
-        variant="destructive"
-        size="icon-sm"
-        onClick={() => remove(index)}
-        className="absolute top-1 right-1"
-      >
-        ✕
-      </Button>
-
+    <form
+      onSubmit={handleSubmit(onSubmitHandler)}
+      className="space-y-4 border p-6 rounded"
+    >
+      {/* QUESTION */}
       <div>
-        <Label>Question {index + 1}</Label>
+        <Label>New Question</Label>
+        <Input {...register('question')} />
 
-        <Input
-          {...register(`questions.${index}.question`)}
-          placeholder="Enter question"
-        />
-
-        {questionErrors?.question?.message && (
+        {errors?.question?.message && (
           <div className="text-sm text-destructive space-y-0">
-            {questionErrors.question.message}
+            {errors.question.message}
           </div>
         )}
       </div>
@@ -127,12 +108,12 @@ export function QuizQuestionCard({
       {/* TYPE */}
       <Label>Type</Label>
       <Controller
-        name={`questions.${index}.type`}
+        name="type"
         control={control}
         render={({ field }) => (
           <Select value={field.value} onValueChange={field.onChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Select type" />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="Boolean">Boolean</SelectItem>
@@ -143,33 +124,32 @@ export function QuizQuestionCard({
         )}
       />
 
-      {/* ANSWERS */}
+      {/* ANSWER */}
       {type === 'Boolean' && (
         <div className="space-y-2">
           <Label>Correct answer</Label>
           <Controller
-            name={`questions.${index}.answer.0`}
+            name="answer.0"
             control={control}
             render={({ field }) => (
               <div className="flex gap-4">
-                {['true', 'false'].map((value) => (
-                  <label key={value} className="flex items-center gap-2">
+                {['true', 'false'].map((v) => (
+                  <label key={v} className="flex items-center gap-2">
                     <input
                       type="radio"
-                      value={value}
-                      checked={field.value === value}
-                      onChange={() => field.onChange(value)}
+                      checked={field.value === v}
+                      onChange={() => field.onChange(v)}
                     />
-                    {value}
+                    {v}
                   </label>
                 ))}
               </div>
             )}
           />
 
-          {questionErrors?.answer?.[0]?.message && (
+          {errors?.answer?.[0]?.message && (
             <div className="text-sm text-destructive space-y-0">
-              {questionErrors.answer[0].message}
+              {errors.answer[0].message}
             </div>
           )}
         </div>
@@ -178,14 +158,11 @@ export function QuizQuestionCard({
       {type === 'Input' && (
         <div className="space-y-2">
           <Label>Correct answer</Label>
-          <Input
-            {...register(`questions.${index}.answer.0`)}
-            placeholder="Correct answer"
-          />
+          <Input placeholder="Correct answer" {...register('answer.0')} />
 
-          {questionErrors?.answer?.[0]?.message && (
+          {errors?.answer?.[0]?.message && (
             <div className="text-sm text-destructive space-y-0">
-              {questionErrors.answer[0].message}
+              {errors.answer[0].message}
             </div>
           )}
         </div>
@@ -195,9 +172,9 @@ export function QuizQuestionCard({
         <div className="space-y-3">
           <Label>Answer options</Label>
 
-          {questionErrors?.answer?.message && (
+          {errors?.answer?.message && (
             <div className="text-sm text-destructive space-y-0">
-              {questionErrors.answer.message}
+              {errors.answer.message}
             </div>
           )}
 
@@ -207,23 +184,20 @@ export function QuizQuestionCard({
               <div key={option.id} className="flex items-start gap-3">
                 <div className="flex-1">
                   <Input
-                    {...register(
-                      `questions.${index}.answerOptions.${optIndex}.value`,
-                    )}
+                    {...register(`answerOptions.${optIndex}.value`)}
                     placeholder="Option"
                   />
 
-                  {questionErrors?.answerOptions?.[optIndex]?.value
-                    ?.message && (
+                  {errors?.answerOptions?.[optIndex]?.value?.message && (
                     <div className="text-sm text-destructive space-y-0">
-                      {questionErrors.answerOptions[optIndex].value.message}
+                      {errors.answerOptions[optIndex].value.message}
                     </div>
                   )}
                 </div>
 
                 <Controller
                   control={control}
-                  name={`questions.${index}.answer`}
+                  name={`answer`}
                   render={({ field }) => (
                     <Checkbox
                       className="mt-3"
@@ -255,9 +229,9 @@ export function QuizQuestionCard({
             );
           })}
 
-          {questionErrors?.answer?.[0]?.message && (
+          {errors?.answer?.[0]?.message && (
             <div className="text-sm text-destructive space-y-0">
-              {questionErrors.answer[0].message}
+              {errors.answer[0].message}
             </div>
           )}
 
@@ -270,6 +244,12 @@ export function QuizQuestionCard({
           </Button>
         </div>
       )}
-    </div>
+
+      <div className="flex justify-end gap-3">
+        <Button type="submit" disabled={!isValid}>
+          Add question
+        </Button>
+      </div>
+    </form>
   );
 }

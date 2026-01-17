@@ -107,6 +107,7 @@ export function CreateQuizForm() {
         <div className="w-full flex justify-center">
           <Button
             type="button"
+            variant="secondary"
             onClick={() =>
               append({
                 question: '',
